@@ -16,13 +16,14 @@ DATA_DIR = './cassava-leaf-disease-classification-data'
 
 def main():
     st.header('Casseva Leaf Disease Detection')
-    st.markdown(""""There are 5 different classes, including 4 disease labels and healthy label:
+    st.markdown("""There are 5 different classes, including 4 disease labels and ** healthy ** label:
+    
                     1. Cassava Bacterial Blight (CBB)
                     2. Cassava Brown Streak Disease (CBSD)
                     3. Cassava Green Mottle (CGM)
                     4. Cassava Mosaic Disease (CMD)
                     5. Healthy
-    """)
+                """)
 
     train_df = pd.read_csv(os.path.join(DATA_DIR, 'train.csv'))
     train_df.loc[:, 'label_name'] = train_df['label'].apply(lambda label_idx: LABEL_IDX_NAME_MAPPING[label_idx])
@@ -46,13 +47,9 @@ def main():
     img = img[:, :, [2, 1, 0]]  # BGR -> RGB
     st.image(img)
 
-    st.write('The class balance status')
+    st.write('### The number of images per class ###')
     class_num_df = train_df.groupby(by=['label_name']).agg({'image_id': 'count'})
     st.bar_chart(class_num_df)
-
-    ### Types of diesase per image
-    disease_num_df_per_image_df = train_df.groupby(by=['image_id']).agg({'label_name': 'count'})
-    st.write(disease_num_df_per_image_df.describe())
 
 
 # Press the green button in the gutter to run the script.
