@@ -3,13 +3,7 @@ import os
 import pandas as pd
 import cv2
 
-LABEL_IDX_NAME_MAPPING = {
-    0: "Cassava Bacterial Blight (CBB)",
-    1: "Cassava Brown Streak Disease (CBSD)",
-    2: "Cassava Green Mottle (CGM)",
-    3: "Cassava Mosaic Disease (CMD)",
-    4: "Healthy"
-}
+from model_constants import LABEL_IDX_NAME_MAPPING
 
 DATA_DIR = './cassava-leaf-disease-classification-data'
 

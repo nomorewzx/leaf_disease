@@ -8,6 +8,7 @@ pandas = "*"
 streamlit = "*"
 tensorflow = "*"
 opencv-python = "*"
+matplotlib = "*"
 
 [dev-packages]
 
