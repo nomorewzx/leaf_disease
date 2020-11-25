@@ -4,9 +4,11 @@ Train keras model on TFRecord files: https://keras.io/examples/keras_recipes/tfr
 
 import tensorflow as tf
 
+from model import make_model, checkpoint_cb, early_stopping_cb
 from model_constants import TRAINING_FILENAMES, VALID_FILENAMES, LABEL_IDX_NAME_MAPPING, LABEL_IDX_SHORT_NAME_MAPPING
 from tfrecord_util import get_dataset
 import matplotlib.pyplot as plt
+import numpy as np
 
 try:
     tpu = tf.distribute.cluster_resolver.TPUClusterResolver()
@@ -33,11 +35,20 @@ def show_batch(image_batch, label_batch):
         ax = plt.subplot(5,5, n+1)
         plt.imshow(image_batch[n]/255.0)
         if label_batch[n] is not None:
-            plt.title(f"{LABEL_IDX_SHORT_NAME_MAPPING[label_batch[n]]}")
+            label_id = np.argmax(label_batch[n])
+            plt.title(f"{LABEL_IDX_SHORT_NAME_MAPPING[label_id]}")
         else:
             plt.title('No Label')
         plt.axis("off")
     plt.show()
 
 
-show_batch(image_batch.numpy(), label_batch.numpy())
+# show_batch(image_batch.numpy(), label_batch.numpy())
+
+with strategy.scope():
+    model = make_model()
+
+history = model.fit(train_dataset,
+                    epochs=2,
+                    validation_data=valid_dataset,
+                    callbacks=[checkpoint_cb, early_stopping_cb])

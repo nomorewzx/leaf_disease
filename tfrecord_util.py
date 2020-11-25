@@ -23,7 +23,8 @@ def read_tfrecord(example, labeled):
     example = tf.io.parse_single_example(example, tfrecord_format)
     image = decode_img(example["image"])
     if labeled:
-        label = tf.cast(example["target"], tf.int32)
+        label_id = tf.cast(example["target"], tf.int32)
+        label = tf.one_hot(label_id, 5)
         return image, label
 
     return image
