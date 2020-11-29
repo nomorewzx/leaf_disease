@@ -1,6 +1,6 @@
-import tensorflow as tf
 import matplotlib.pyplot as plt
 import numpy as np
+import tensorflow as tf
 
 from model_constants import LABEL_IDX_SHORT_NAME_MAPPING, FILE_NAMES
 from tfrecord_util import get_dataset
@@ -17,6 +17,7 @@ def test_read_tf_record():
 
 def test_load_dataset_and_show():
     all_dataset = get_dataset(FILE_NAMES)
+    all_dataset = all_dataset.batch(32)
     image_batch, label_batch = next(iter(all_dataset))
 
     show_batch(image_batch.numpy(), label_batch.numpy())

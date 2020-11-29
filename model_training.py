@@ -5,7 +5,7 @@ Train keras model on TFRecord files: https://keras.io/examples/keras_recipes/tfr
 import tensorflow as tf
 
 from model import make_model, checkpoint_cb, early_stopping_cb, augment, tensorboard_cb
-from model_constants import TRAINING_FILENAMES, VALID_FILENAMES, FILE_NAMES
+from model_constants import TRAINING_FILENAMES, VALID_FILENAMES, FILE_NAMES, BATCH_SIZE
 from tfrecord_util import get_dataset, get_splited_data
 
 try:
@@ -24,6 +24,9 @@ print('VALIDATION tf records files', len(VALID_FILENAMES))
 all_dataset = get_dataset(FILE_NAMES)
 train_dataset, val_dataset, test_dataset = get_splited_data(all_dataset)
 
+train_dataset = train_dataset.batch(BATCH_SIZE)
+val_dataset = val_dataset.batch(BATCH_SIZE)
+
 with strategy.scope():
     model = make_model()
 
@@ -34,6 +37,6 @@ if AUGMENT:
     valid_dataset = augment(val_dataset)
 
 history = model.fit(train_dataset,
-                    epochs=20,
+                    epochs=2,
                     validation_data=val_dataset,
                     callbacks=[checkpoint_cb, early_stopping_cb, tensorboard_cb])

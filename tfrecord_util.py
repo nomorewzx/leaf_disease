@@ -1,11 +1,11 @@
+import math
+import os
 from functools import partial
 
-import tensorflow as tf
 import pandas as pd
-import os
-import math
+import tensorflow as tf
 
-from model_constants import IMAGE_SIZE, AUTO_TUNE, BATCH_SIZE
+from model_constants import IMAGE_SIZE, AUTO_TUNE
 
 
 def decode_img(image):
@@ -44,14 +44,12 @@ def get_dataset(filenames, labeled=True) -> tf.data.TFRecordDataset:
     dataset = load_dataset(filenames, labeled)
     dataset = dataset.shuffle(2048)
     dataset = dataset.prefetch(buffer_size=AUTO_TUNE)
-    dataset = dataset.batch(BATCH_SIZE)
     return dataset
 
 
 def get_train_val_test_size(train_ratio=0.7, val_ratio=0.2, test_ratio=0.1):
-    train_df = pd.read_csv(os.path.join('./cassava-leaf-disease-classification-data', 'train.csv'))
+    train_df = pd.read_csv(os.path.join(os.path.abspath(os.path.dirname(__file__)), 'cassava-leaf-disease-classification-data/train.csv'))
     dataset_size = train_df.image_id.drop_duplicates().shape[0]
-
     assert train_ratio + val_ratio + test_ratio <= 1, 'Adjust the train, val, test split ratio'
 
     train_size = math.ceil(dataset_size * train_ratio)
@@ -63,9 +61,8 @@ def get_train_val_test_size(train_ratio=0.7, val_ratio=0.2, test_ratio=0.1):
 
 def get_splited_data(all_dataset: tf.data.TFRecordDataset):
     train_size, val_size, test_size = get_train_val_test_size()
-
-    train_ds = all_dataset.take(train_size)
+    train_dataset = all_dataset.take(train_size)
     remaining_dataset = all_dataset.skip(train_size)
     val_dataset = remaining_dataset.take(val_size)
     test_dataset = remaining_dataset.skip(val_size)
-    return train_ds, val_dataset, test_dataset
+    return train_dataset, val_dataset, test_dataset
