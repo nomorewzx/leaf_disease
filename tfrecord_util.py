@@ -1,5 +1,10 @@
 from functools import partial
+
 import tensorflow as tf
+import pandas as pd
+import os
+import math
+
 from model_constants import IMAGE_SIZE, AUTO_TUNE, BATCH_SIZE
 
 
@@ -15,22 +20,18 @@ def read_tfrecord(example, labeled):
         {
             "image": tf.io.FixedLenFeature([], tf.string),
             "target": tf.io.FixedLenFeature([], tf.int64),
+            "image_name": tf.io.FixedLenFeature([], tf.string)
         }
-        if labeled
-        else {"image": tf.io.FixedLenFeature([], tf.string),}
     )
 
     example = tf.io.parse_single_example(example, tfrecord_format)
     image = decode_img(example["image"])
-    if labeled:
-        label_id = tf.cast(example["target"], tf.int32)
-        label = tf.one_hot(label_id, 5)
-        return image, label
-
-    return image
+    label_id = tf.cast(example["target"], tf.int32)
+    label = tf.one_hot(label_id, 5)
+    return image, label
 
 
-def load_dataset(filenames, labeled=True):
+def load_dataset(filenames, labeled=True) -> tf.data.TFRecordDataset:
     ignore_order = tf.data.Options()
     ignore_order.experimental_deterministic = False
 
@@ -39,9 +40,32 @@ def load_dataset(filenames, labeled=True):
     return dataset
 
 
-def get_dataset(filenames, labeled=True):
+def get_dataset(filenames, labeled=True) -> tf.data.TFRecordDataset:
     dataset = load_dataset(filenames, labeled)
     dataset = dataset.shuffle(2048)
     dataset = dataset.prefetch(buffer_size=AUTO_TUNE)
     dataset = dataset.batch(BATCH_SIZE)
     return dataset
+
+
+def get_train_val_test_size(train_ratio=0.7, val_ratio=0.2, test_ratio=0.1):
+    train_df = pd.read_csv(os.path.join('./cassava-leaf-disease-classification-data', 'train.csv'))
+    dataset_size = train_df.image_id.drop_duplicates().shape[0]
+
+    assert train_ratio + val_ratio + test_ratio <= 1, 'Adjust the train, val, test split ratio'
+
+    train_size = math.ceil(dataset_size * train_ratio)
+    val_size = math.ceil(dataset_size * val_ratio)
+    test_size = dataset_size - train_size - val_size
+
+    return train_size, val_size, test_size
+
+
+def get_splited_data(all_dataset: tf.data.TFRecordDataset):
+    train_size, val_size, test_size = get_train_val_test_size()
+
+    train_ds = all_dataset.take(train_size)
+    remaining_dataset = all_dataset.skip(train_size)
+    val_dataset = remaining_dataset.take(val_size)
+    test_dataset = remaining_dataset.skip(val_size)
+    return train_ds, val_dataset, test_dataset

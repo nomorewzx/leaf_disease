@@ -9,6 +9,7 @@ streamlit = "*"
 tensorflow = "*"
 opencv-python = "*"
 matplotlib = "*"
+pytest = "*"
 
 [dev-packages]
 

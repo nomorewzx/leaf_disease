@@ -4,11 +4,9 @@ Train keras model on TFRecord files: https://keras.io/examples/keras_recipes/tfr
 
 import tensorflow as tf
 
-from model import make_model, checkpoint_cb, early_stopping_cb
-from model_constants import TRAINING_FILENAMES, VALID_FILENAMES, LABEL_IDX_NAME_MAPPING, LABEL_IDX_SHORT_NAME_MAPPING
-from tfrecord_util import get_dataset
-import matplotlib.pyplot as plt
-import numpy as np
+from model import make_model, checkpoint_cb, early_stopping_cb, augment, tensorboard_cb
+from model_constants import TRAINING_FILENAMES, VALID_FILENAMES, FILE_NAMES
+from tfrecord_util import get_dataset, get_splited_data
 
 try:
     tpu = tf.distribute.cluster_resolver.TPUClusterResolver()
@@ -23,32 +21,19 @@ print('Number of replicas:', strategy.num_replicas_in_sync)
 print('TRAIN tf records files', len(TRAINING_FILENAMES))
 print('VALIDATION tf records files', len(VALID_FILENAMES))
 
-train_dataset = get_dataset(TRAINING_FILENAMES)
-valid_dataset = get_dataset(VALID_FILENAMES)
-
-image_batch, label_batch = next(iter(train_dataset))
-
-
-def show_batch(image_batch, label_batch):
-    plt.figure(figsize=(10, 10))
-    for n in range(25):
-        ax = plt.subplot(5,5, n+1)
-        plt.imshow(image_batch[n]/255.0)
-        if label_batch[n] is not None:
-            label_id = np.argmax(label_batch[n])
-            plt.title(f"{LABEL_IDX_SHORT_NAME_MAPPING[label_id]}")
-        else:
-            plt.title('No Label')
-        plt.axis("off")
-    plt.show()
-
-
-# show_batch(image_batch.numpy(), label_batch.numpy())
+all_dataset = get_dataset(FILE_NAMES)
+train_dataset, val_dataset, test_dataset = get_splited_data(all_dataset)
 
 with strategy.scope():
     model = make_model()
 
+AUGMENT = False
+
+if AUGMENT:
+    train_dataset = augment(train_dataset)
+    valid_dataset = augment(val_dataset)
+
 history = model.fit(train_dataset,
-                    epochs=2,
-                    validation_data=valid_dataset,
-                    callbacks=[checkpoint_cb, early_stopping_cb])
+                    epochs=20,
+                    validation_data=val_dataset,
+                    callbacks=[checkpoint_cb, early_stopping_cb, tensorboard_cb])

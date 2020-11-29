@@ -3,3 +3,4 @@ cassava-leaf-disease-classification-data/
 __pycache__/
 *.pyc
 thoughts.md
+*.h5
